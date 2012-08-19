@@ -38,14 +38,36 @@ class Editor < Gosu::Window
     Alphabet::initialize(self)
     @current_frame = 0
     @block_size = $CONFIG['Pixel_Size']
+    File.open("#{$PROJECT}/framemap.marshal", 'r') do |file|
+      @framemap = Marshal.load(file)
+    end
   end # End GameWindow Initialize
 
+  def pixel_to_cellpixel(pixel)
+    return (pixel / @block_size).floor() * @block_size
+  end
+
   def update()
+    if button_down?(Gosu::Button::MsLeft) then
+      if @framemap[@current_frame] == nil then
+        @framemap[@current_frame] = Hash.new()
+      end
+      @framemap[@current_frame][[pixel_to_cellpixel(mouse_x), pixel_to_cellpixel(mouse_y)]] = 0xFFFFFFFF
+    elsif button_down?(Gosu::Button::MsRight) then
+      unless @framemap[@current_frame] == nil
+        @framemap[@current_frame].delete([pixel_to_cellpixel(mouse_x), pixel_to_cellpixel(mouse_y)])
+      end
+    end
   end # End GameWindow Update
 
   def draw()
-    draw_square(self, (mouse_x / @block_size).floor() * @block_size, (mouse_y / @block_size).floor() * @block_size, 1, @block_size, @block_size, 0x7f0000ff)
+    draw_square(self, pixel_to_cellpixel(mouse_x), pixel_to_cellpixel(mouse_y), 1, @block_size, @block_size, 0x7f0000ff)
     Alphabet::draw_text(@current_frame, 0, 0, 2, 4)
+    unless @framemap[@current_frame] == nil
+      @framemap[@current_frame].each do |key, value|
+        draw_square(self, key[0], key[1], 0, @block_size, @block_size, value)
+      end
+    end
   end # End GameWindow Draw
 
   def button_down(id)
@@ -63,6 +85,21 @@ class Editor < Gosu::Window
   def needs_cursor?()
     return true
   end
+
+  def clean_framemap()
+    @framemap.each_index do |i|
+      @framemap[i] = nil if @framemap[i] == nil or @framemap[i].empty?()
+    end
+    @framemap = remove_trailing_nils(@framemap)
+  end
+
+  def close()
+    clean_framemap()
+    File.open("#{$PROJECT}/framemap.marshal", 'w+') do |file|
+      Marshal.dump(@framemap, file)
+    end
+    super()
+  end
 end # End GameWindow class
 
 
@@ -74,7 +111,7 @@ end
 
 def open_editor()
   load_config_file()
-  window = Editor.new().show()
+  Editor.new().show()
 end
 
 
@@ -88,7 +125,7 @@ until quit do
   print '> '
   input = gets().chomp().split(' ')
   print "\n"
-  if not input.empty? then
+  unless input.empty?
     command = input.shift()
     args = input
     if command.casecmp('help') == 0 or command == '?' then
@@ -141,6 +178,7 @@ until quit do
       if $PROJECT == nil then
         puts 'No project loaded!'
       else
+        quit = true
         open_editor()
       end
     elsif command.casecmp('exit') == 0 or command.casecmp('quit') == 0 then

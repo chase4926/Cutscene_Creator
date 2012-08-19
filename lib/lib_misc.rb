@@ -23,6 +23,20 @@ module EveryModule
 end
 
 
+def remove_trailing_nils(array)
+  compact_array = array.compact()
+  count = 0
+  match_count = 0
+  while match_count < compact_array.count() do
+    if array[count] == compact_array[match_count] then
+      match_count += 1
+    end
+    count += 1
+  end
+  return array[0..(count-1)]
+end
+
+
 #
 # Returns true if the directory exists (convenience method)
 #
@@ -63,7 +77,7 @@ end
 #
 # Does a recursive search of a directory
 #
-def recursive_search_directory(directory, path_so_far=nil)
+def recursive_search_directory(directory)
   result = Dir.glob(File.join(directory, '**/*'))
   result.each_index do |i|
     result[i] = nil if File.directory?(result[i])
@@ -76,7 +90,7 @@ end
 # Does a block of code verbosely regardless of the state of the $VERBOSE variable
 #
 def verbosely()
-  if $VERBOSE == true then
+  if $VERBOSE then
     reset = true
   else
     reset = false
@@ -91,7 +105,7 @@ end
 # Does a block of code non-verbosely regardless of the state of the $VERBOSE variable
 #
 def non_verbosely()
-  if $VERBOSE == true then
+  if $VERBOSE then
     reset = true
   else
     reset = false
@@ -143,11 +157,13 @@ end
 #
 # Returns a random floating point integer between min and max
 #
+=begin
 def randomfloat(min, max, seed=nil) # Why do I need this?
   a = random(min, max, seed)
   a = a.to_f / 10.to_f
   return a
 end
+=end
 
 
 #
