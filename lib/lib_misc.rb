@@ -45,35 +45,6 @@ def directory_exists?(directory)
 end
 
 
-=begin
-#
-# Does a recursive search of a directory
-#
-def old_recursive_search_directory(directory, path_so_far=nil)
-  result = []
-  search_directory(directory).each do |path|
-    if File.directory?(path) then
-      if path_so_far == nil then
-        next_path_so_far = path.split('/').last
-      else
-        next_path_so_far = "#{path_so_far}/#{path.split('/').last}"
-      end
-      recursive_search_directory(path, next_path_so_far).each do |n|
-        result << n
-      end
-    else
-      if path_so_far == nil then
-        result << path.split('/').last
-      else
-        result << "#{path_so_far}/#{path.split('/').last}"
-      end
-    end
-  end
-  return result
-end
-=end
-
-
 #
 # Does a recursive search of a directory
 #
@@ -152,18 +123,6 @@ def random(min, max)
   srand()
   return (min..max).to_a.sort_by{rand}.pop
 end
-
-
-#
-# Returns a random floating point integer between min and max
-#
-=begin
-def randomfloat(min, max, seed=nil) # Why do I need this?
-  a = random(min, max, seed)
-  a = a.to_f / 10.to_f
-  return a
-end
-=end
 
 
 #

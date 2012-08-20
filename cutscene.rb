@@ -18,6 +18,7 @@ include Gosu
 require_relative 'lib/lib.rb'
 require_relative 'lib/lib_misc.rb'
 require_relative 'lib/lib_alphabet.rb'
+include EveryModule
 # ---
 
 
@@ -34,7 +35,7 @@ end
 class Editor < Gosu::Window
   def initialize()
     super($CONFIG['Window_Width'], $CONFIG['Window_Height'], false)
-    self.caption = 'Cutscene Creator'
+    self.caption = 'Cutscene Creator Editor'
     Alphabet::initialize(self)
     @current_frame = 0
     @block_size = $CONFIG['Pixel_Size']
@@ -103,6 +104,41 @@ class Editor < Gosu::Window
 end # End GameWindow class
 
 
+class Player < Gosu::Window
+  def initialize()
+    super($CONFIG['Window_Width'], $CONFIG['Window_Height'], false)
+    self.caption = 'Cutscene Creator Editor'
+    @current_frame = 0
+    @framerate = $CONFIG['Framerate']
+    @block_size = $CONFIG['Pixel_Size']
+    File.open("#{$PROJECT}/framemap.marshal", 'r') do |file|
+      @framemap = Marshal.load(file)
+    end
+    @song = nil
+    if File.exist?("#{$PROJECT}/sound.ogg") then
+      @song = Song.new(self, "#{$PROJECT}/sound.ogg")
+      @song.play(false)
+    end
+  end
+
+  def update()
+    every(@framerate) do
+      @current_frame += 1
+      if @current_frame >= @framemap.count() then
+        close()
+      end
+    end
+  end
+
+  def draw()
+    unless @framemap[@current_frame] == nil
+      @framemap[@current_frame].each do |key, value|
+        draw_square(self, key[0], key[1], 0, @block_size, @block_size, value)
+      end
+    end
+  end
+end
+
 def load_config_file()
   File.open("#{$PROJECT}/config.yml", 'r') do |file|
     $CONFIG = YAML::load(file.read())
@@ -114,6 +150,10 @@ def open_editor()
   Editor.new().show()
 end
 
+def open_player()
+  load_config_file()
+  Player.new().show()
+end
 
 puts '----------------'
 puts 'Cut-scene creator'
@@ -180,6 +220,13 @@ until quit do
       else
         quit = true
         open_editor()
+      end
+    elsif command.casecmp('play') == 0 then
+      if $PROJECT == nil then
+        puts 'No project loaded!'
+      else
+        quit = true
+        open_player()
       end
     elsif command.casecmp('exit') == 0 or command.casecmp('quit') == 0 then
       quit = true
